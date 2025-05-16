@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Interactive Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1, h2 {
+            color: #6a0dad;
+            text-align: center;
+        }
+        
+        .quiz-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .question {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .options {
+            margin-left: 20px;
+        }
+        
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #6a0dad;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        button:hover {
+            background-color: #5a0b9d;
+        }
+        
+        .result {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+            color: #6a0dad;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #6a0dad;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .question-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .nav-button {
+            padding: 8px 15px;
+        }
+        
+        .section-title {
+            background-color: #6a0dad;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .mcq-option {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .mcq-option:hover {
+            background-color: #f0e6ff;
+        }
+        
+        .keyword-hint {
+            font-size: 0.9em;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Physics Interactive Quiz</h1>
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+    
+    <div id="intro-screen">
+        <h2>Welcome to the Physics Quiz!</h2>
+        <p>This quiz contains 46 questions divided into four sections:</p>
+        <ul>
+            <li><strong>Section 1</strong>: Multiple Choice (12 questions)</li>
+            <li><strong>Section 2</strong>: Conceptual Short Answer (12 questions)</li>
+            <li><strong>Section 3</strong>: Factual Short Answer (12 questions)</li>
+            <li><strong>Section 4</strong>: Math Problems (10 questions)</li>
+        </ul>
+        <button id="start-quiz">Start Quiz</button>
+    </div>
+    
+    <div id="quiz-container" class="hidden">
+        <div id="section-1" class="hidden">
+            <div class="section-title">Section 1: Multiple Choice Questions</div>
+            <div id="questions-1"></div>
+        </div>
+        <div id="section-2" class="hidden">
+            <div class="section-title">Section 2: Conceptual Short Answer</div>
+            <div id="questions-2"></div>
+        </div>
+        <div id="section-3" class="hidden">
+            <div class="section-title">Section 3: Factual Short Answer</div>
+            <div id="questions-3"></div>
+        </div>
+        <div id="section-4" class="hidden">
+            <div class="section-title">Section 4: Math Problems</div>
+            <div id="questions-4"></div>
+        </div>
+        <div class="question-navigation">
+            <button id="prev-question" class="nav-button">Previous</button>
+            <button id="next-question" class="nav-button">Next</button>
+        </div>
+    </div>
+    
+    <div id="results-screen" class="hidden">
+        <h2>Quiz Results</h2>
+        <div class="score-display">
+            Your score: <span id="final-score">0</span>/46
+        </div>
+        <div class="score-display">
+            Section 1: <span id="section-1-score">0</span>/12<br>
+            Section 2: <span id="section-2-score">0</span>/12<br>
+            Section 3: <span id="section-3-score">0</span>/12<br>
+            Section 4: <span id="section-4-score">0</span>/10
+        </div>
+        <div id="detailed-results"></div>
+        <button id="restart-quiz">Take Quiz Again</button>
+    </div>
+
+    <script>
+        const section1Questions = [
+            {
+                question: "1. What is the unit of electric current?",
+                options: ["Volt", "Ampere", "Ohm", "Watt"],
+                answer: "Ampere",
+                explanation: "The unit of electric current is the Ampere (A)."
+            },
+            {
+                question: "2. Which subatomic particle is responsible for static electricity?",
+                options: ["Neutron", "Proton", "Electron", "Positron"],
+                answer: "Electron",
+                explanation: "Electrons moving between objects cause static electricity."
+            },
+            {
+                question: "3. A complete circuit must include:",
+                options: ["Battery and bulb", "Battery and wire", "Bulb and switch", "Power source, conductor, and load"],
+                answer: "Power source, conductor, and load",
+                explanation: "All three components are necessary for a complete circuit."
+            },
+            {
+                question: "4. The resistance of a wire depends on:",
+                options: ["Its length", "Its thickness", "The material", "All of the above"],
+                answer: "All of the above",
+                explanation: "Resistance depends on length, cross-sectional area (thickness), and material."
+            },
+            {
+                question: "5. What happens to the total resistance in a series circuit when more resistors are added?",
+                options: ["Decreases", "Increases", "Stays the same", "Becomes zero"],
+                answer: "Increases",
+                explanation: "In series circuits, resistances add up (R_total = R1 + R2 + ...)."
+            },
+            {
+                question: "6. Which of these is an effect of electric current?",
+                options: ["Magnetic", "Heating", "Chemical", "All of the above"],
+                answer: "All of the above",
+                explanation: "Electric current can produce magnetic fields, heat, and chemical effects."
+            },
+            {
+                question: "7. Which wire will heat up the most when current flows?",
+                options: ["Short and thick", "Short and thin", "Long and thick", "Long and thin"],
+                answer: "Long and thin",
+                explanation: "Longer and thinner wires have higher resistance, producing more heat (P = I²R)."
+            },
+            {
+                question: "8. Which material is used in fuse wires?",
+                options: ["Copper", "Iron", "Aluminium", "An alloy of tin and lead"],
+                answer: "An alloy of tin and lead",
+                explanation: "Fuse wires are made of low-melting-point alloys to break the circuit when overheated."
+            },
+            {
+                question: "9. Which rule helps determine the direction of the magnetic field around a current-carrying conductor?",
+                options: ["Left-hand rule", "Right-hand thumb rule", "Fleming's right-hand rule", "Newton's law"],
+                answer: "Right-hand thumb rule",
+                explanation: "The right-hand thumb rule shows the magnetic field direction around a current-carrying wire."
+            },
+            {
+                question: "10. What is produced when current flows through a coil of wire?",
+                options: ["Electric spark", "Magnetic field", "Heat only", "Light"],
+                answer: "Magnetic field",
+                explanation: "Current through a coil creates a magnetic field, forming an electromagnet."
+            },
+            {
+                question: "11. Which device uses electromagnetism to work?",
+                options: ["Thermometer", "Electric bell", "Solar panel", "Voltmeter"],
+                answer: "Electric bell",
+                explanation: "Electric bells use electromagnets to move a striker."
+            },
+            {
+                question: "12. Which radiation can be stopped by a sheet of paper?",
+                options: ["Alpha", "Beta", "Gamma", "All"],
+                answer: "Alpha",
+                explanation: "Alpha particles are the least penetrating and can be stopped by paper."
+            }
+        ];
+
+        const section2Questions = [
+            {
+                question: "1. What is the difference between static electricity and current electricity?",
+                keywords: ["static is stationary", "current is moving", "static builds up", "current flows"],
+                answer: "Static electricity is stationary charge buildup, while current electricity is the flow of electrons through a conductor.",
+                explanation: "Static electricity involves accumulated charges, whereas current electricity involves continuous electron flow."
+            },
+            {
+                question: "2. Why does your hair stand up when you rub a balloon on it?",
+                keywords: ["transfer electrons", "like charges repel", "static charge"],
+                answer: "Electrons transfer from hair to balloon, leaving hair positively charged. Like charges repel, making hairs stand apart.",
+                explanation: "Friction transfers electrons, creating static charges that repel similar charges."
+            },
+            {
+                question: "3. What makes a material a good conductor of electricity?",
+                keywords: ["free electrons", "mobile charges", "low resistance"],
+                answer: "Good conductors have many free electrons that can move easily through the material.",
+                explanation: "Metals are good conductors because their outer electrons are loosely bound."
+            },
+            {
+                question: "4. How does a fuse protect a circuit?",
+                keywords: ["melts", "overcurrent", "breaks circuit"],
+                answer: "A fuse melts when current exceeds its rating, breaking the circuit to prevent damage.",
+                explanation: "Fuses are safety devices that sacrifice themselves to protect other components."
+            },
+            {
+                question: "5. Why is current the same at all points in a series circuit?",
+                keywords: ["single path", "no alternative route", "conservation of charge"],
+                answer: "In a series circuit, there's only one path for current, so it must be the same throughout.",
+                explanation: "Current can't accumulate or disappear in a series circuit (conservation of charge)."
+            },
+            {
+                question: "6. Explain how electric current can produce a magnetic effect.",
+                keywords: ["moving charges", "magnetic field", "right-hand rule"],
+                answer: "Moving electrons (current) create a magnetic field around the conductor, following the right-hand rule.",
+                explanation: "This is the principle behind electromagnets and many electrical devices."
+            },
+            {
+                question: "7. Why does a coil of wire produce a stronger magnetic field than a straight wire?",
+                keywords: ["multiple loops", "fields combine", "concentrated"],
+                answer: "Each loop's magnetic field adds together, creating a stronger combined field in the coil's center.",
+                explanation: "The magnetic fields from multiple turns reinforce each other."
+            },
+            {
+                question: "8. What happens to a magnetic field if you reverse the direction of current in a coil?",
+                keywords: ["poles reverse", "direction changes", "north/south switch"],
+                answer: "Reversing current reverses the magnetic field direction, swapping the north and south poles.",
+                explanation: "The right-hand rule shows current direction determines magnetic pole orientation."
+            },
+            {
+                question: "9. How does the heating effect of a wire relate to resistance?",
+                keywords: ["Joule heating", "I²R", "energy conversion"],
+                answer: "Higher resistance causes more energy conversion to heat (P = I²R), making the wire hotter.",
+                explanation: "This is known as Joule heating or resistive heating."
+            },
+            {
+                question: "10. Why are metals like copper used in household wiring?",
+                keywords: ["good conductor", "low resistance", "ductile", "cheap"],
+                answer: "Copper has low resistance, is ductile (can be drawn into wires), and is relatively inexpensive.",
+                explanation: "These properties make copper ideal for efficient power transmission."
+            },
+            {
+                question: "11. Explain the importance of earthing in electrical systems.",
+                keywords: ["safety", "divert excess", "prevent shock"],
+                answer: "Earthing provides a safe path for excess current to ground, preventing electric shocks and fires.",
+                explanation: "It protects users and equipment by stabilizing voltage and diverting faults."
+            },
+            {
+                question: "12. Why is radiation considered dangerous?",
+                keywords: ["ionizing", "damage cells", "mutations"],
+                answer: "Radiation can ionize atoms in living cells, causing DNA damage and potential health risks.",
+                explanation: "High-energy particles can break molecular bonds in biological tissue."
+            }
+        ];
+
+        const section3Questions = [
+            {
+                question: "1. State Ohm's Law.",
+                keywords: ["V=IR", "voltage current resistance", "proportional"],
+                answer: "Ohm's Law states that voltage (V) equals current (I) times resistance (R): V = IR.",
+                explanation: "This fundamental relationship applies to many (but not all) electrical components."
+            },
+            {
+                question: "2. Define voltage and give its unit.",
+                keywords: ["potential difference", "energy per charge", "volt"],
+                answer: "Voltage is the potential difference (energy per unit charge), measured in volts (V).",
+                explanation: "1 volt = 1 joule per coulomb of charge."
+            },
+            {
+                question: "3. Name two safety devices in household circuits.",
+                keywords: ["fuse", "circuit breaker", "GFCI"],
+                answer: "Fuses and circuit breakers are common household circuit safety devices.",
+                explanation: "Both interrupt current flow when it becomes dangerously high."
+            },
+            {
+                question: "4. What is meant by resistance?",
+                keywords: ["opposes current", "voltage/current", "ohms"],
+                answer: "Resistance is a material's opposition to electric current, measured in ohms (Ω).",
+                explanation: "It's calculated as R = V/I (voltage divided by current)."
+            },
+            {
+                question: "5. Draw a simple series circuit with a battery and two bulbs.",
+                keywords: ["single loop", "no branches", "sequential"],
+                answer: "A series circuit has all components connected end-to-end in a single loop: battery → bulb → bulb → battery.",
+                explanation: "In series circuits, current has only one path to follow."
+            },
+            {
+                question: "6. What does a voltmeter measure, and where is it connected in a circuit?",
+                keywords: ["potential difference", "parallel", "across component"],
+                answer: "A voltmeter measures potential difference (voltage) and is connected in parallel across components.",
+                explanation: "Parallel connection ensures it doesn't alter the circuit's current flow."
+            },
+            {
+                question: "7. What does an ammeter measure, and how is it connected in a circuit?",
+                keywords: ["current", "series", "in line"],
+                answer: "An ammeter measures current and must be connected in series within the circuit.",
+                explanation: "Series connection allows it to measure the actual current flowing through."
+            },
+            {
+                question: "8. Name two everyday uses of electromagnets.",
+                keywords: ["motors", "speakers", "MRI", "relays"],
+                answer: "Electromagnets are used in electric motors and speakers.",
+                explanation: "They convert electrical energy to mechanical motion or sound."
+            },
+            {
+                question: "9. List three properties of magnetic field lines.",
+                keywords: ["never cross", "north to south", "density shows strength"],
+                answer: "1) Never intersect 2) Run north to south 3) Closer lines indicate stronger fields.",
+                explanation: "Field lines are a visual representation of magnetic field strength and direction."
+            },
+            {
+                question: "10. What type of radiation is most penetrating?",
+                keywords: ["gamma", "high energy", "electromagnetic"],
+                answer: "Gamma radiation is the most penetrating type of nuclear radiation.",
+                explanation: "Gamma rays can pass through many materials, requiring thick lead or concrete to stop."
+            },
+            {
+                question: "11. Name two harmful effects of radiation on living things.",
+                keywords: ["burns", "cancer", "mutations", "radiation sickness"],
+                answer: "Radiation can cause radiation burns and increase cancer risk.",
+                explanation: "Ionizing radiation damages cells and DNA at the molecular level."
+            },
+            {
+                question: "12. Describe one use of the heating effect of current in daily life.",
+                keywords: ["toaster", "heater", "kettle", "incandescent bulb"],
+                answer: "Electric heaters use the heating effect of current to warm rooms.",
+                explanation: "Resistive elements convert electrical energy to heat energy."
+            }
+        ];
+
+        const section4Questions = [
+            {
+                question: "1. If a current of 3 A flows through a resistor of 4 Ω, what is the voltage across it?",
+                formula: "V = I × R",
+                answer: "12",
+                unit: "V",
+                explanation: "V = 3 A × 4 Ω = 12 V"
+            },
+            {
+                question: "2. Calculate the resistance of a wire if a 12 V battery produces a current of 2 A.",
+                formula: "R = V ÷ I",
+                answer: "6",
+                unit: "Ω",
+                explanation: "R = 12 V ÷ 2 A = 6 Ω"
+            },
+            {
+                question: "3. A circuit has a resistance of 5 Ω and a voltage of 10 V. What is the current flowing?",
+                formula: "I = V ÷ R",
+                answer: "2",
+                unit: "A",
+                explanation: "I = 10 V ÷ 5 Ω = 2 A"
+            },
+            {
+                question: "4. What is the power consumed when a 2 A current flows through a 6 Ω resistor?",
+                formula: "P = I² × R",
+                answer: "24",
+                unit: "W",
+                explanation: "P = (2 A)² × 6 Ω = 4 × 6 = 24 W"
+            },
+            {
+                question: "5. A bulb uses 60 W of power when connected to a 12 V battery. What is the current flowing?",
+                formula: "P = V × I → I = P ÷ V",
+                answer: "5",
+                unit: "A",
+                explanation: "I = 60 W ÷ 12 V = 5 A"
+            },
+            {
+                question: "6. A heater draws 4 A of current from a 230 V source. Find the power consumed.",
+                formula: "P = V × I",
+                answer: "920",
+                unit: "W",
+                explanation: "P = 230 V × 4 A = 920 W"
+            },
+            {
+                question: "7. If a wire has a resistance of 8 Ω and carries 3 A of current, calculate the heat generated in 2 minutes.",
+                formula: "Heat = I² × R × t (t in seconds)",
+                answer: "8640",
+                unit: "J",
+                explanation: "Heat = (3 A)² × 8 Ω × 120 s = 9 × 8 × 120 = 8640 J"
+            },
+            {
+                question: "8. A circuit has two resistors: 3 Ω and 6 Ω in series. Find the total resistance.",
+                formula: "R_total = R₁ + R₂",
+                answer: "9",
+                unit: "Ω",
+                explanation: "R_total = 3 Ω + 6 Ω = 9 Ω"
+            },
+            {
+                question: "9. Two resistors of 6 Ω and 3 Ω are in parallel. What is the total resistance?",
+                formula: "1/R_total = 1/R₁ + 1/R₂",
+                answer: "2",
+                unit: "Ω",
+                explanation: "1/R_total = 1/6 + 1/3 = 1/6 + 2/6 = 3/6 = 1/2 → R_total = 2 Ω"
+            },
+            {
+                question: "10. A device uses 100 W of power for 5 minutes. How much energy is used in joules?",
+                formula: "Energy = Power × time (in seconds)",
+                answer: "30000",
+                unit: "J",
+                explanation: "Energy = 100 W × 300 s = 30,000 J"
+            }
+        ];
+
+        // Quiz state variables
+        let currentSection = 1;
+        let currentQuestion = 0;
+        let score1 = 0, score2 = 0, score3 = 0, score4 = 0;
+        let userAnswers1 = new Array(section1Questions.length).fill(null);
+        let userAnswers2 = new Array(section2Questions.length).fill(null);
+        let userAnswers3 = new Array(section3Questions.length).fill(null);
+        let userAnswers4 = new Array(section4Questions.length).fill(null);
+
+        // DOM elements
+        const introScreen = document.getElementById('intro-screen');
+        const quizContainer = document.getElementById('quiz-container');
+        const section1Div = document.getElementById('section-1');
+        const section2Div = document.getElementById('section-2');
+        const section3Div = document.getElementById('section-3');
+        const section4Div = document.getElementById('section-4');
+        const questions1Div = document.getElementById('questions-1');
+        const questions2Div = document.getElementById('questions-2');
+        const questions3Div = document.getElementById('questions-3');
+        const questions4Div = document.getElementById('questions-4');
+        const resultsScreen = document.getElementById('results-screen');
+        const finalScore = document.getElementById('final-score');
+        const section1Score = document.getElementById('section-1-score');
+        const section2Score = document.getElementById('section-2-score');
+        const section3Score = document.getElementById('section-3-score');
+        const section4Score = document.getElementById('section-4-score');
+        const detailedResults = document.getElementById('detailed-results');
+        const progressBar = document.getElementById('progress');
+        const prevButton = document.getElementById('prev-question');
+        const nextButton = document.getElementById('next-question');
+
+        // Event listeners
+        document.getElementById('start-quiz').addEventListener('click', startQuiz);
+        document.getElementById('restart-quiz').addEventListener('click', restartQuiz);
+        nextButton.addEventListener('click', nextQuestion);
+        prevButton.addEventListener('click', prevQuestion);
+
+        // Functions
+        function startQuiz() {
+            introScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            section1Div.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            // Update progress bar
+            const totalQuestions = section1Questions.length + section2Questions.length + 
+                                 section3Questions.length + section4Questions.length;
+            let answeredQuestions;
+            if (currentSection === 1) answeredQuestions = currentQuestion;
+            else if (currentSection === 2) answeredQuestions = section1Questions.length + currentQuestion;
+            else if (currentSection === 3) answeredQuestions = section1Questions.length + section2Questions.length + currentQuestion;
+            else answeredQuestions = section1Questions.length + section2Questions.length + section3Questions.length + currentQuestion;
+            
+            progressBar.style.width = `${(answeredQuestions / totalQuestions) * 100}%`;
+            
+            // Update navigation buttons
+            prevButton.disabled = currentSection === 1 && currentQuestion === 0;
+            
+            if (currentSection === 1) {
+                nextButton.textContent = currentQuestion === section1Questions.length - 1 ? 'Next Section' : 'Next';
+            } else if (currentSection === 2) {
+                nextButton.textContent = currentQuestion === section2Questions.length - 1 ? 'Next Section' : 'Next';
+            } else if (currentSection === 3) {
+                nextButton.textContent = currentQuestion === section3Questions.length - 1 ? 'Next Section' : 'Next';
+            } else {
+                nextButton.textContent = currentQuestion === section4Questions.length - 1 ? 'Submit' : 'Next';
+            }
+            
+            // Display current question
+            questions1Div.innerHTML = '';
+            questions2Div.innerHTML = '';
+            questions3Div.innerHTML = '';
+            questions4Div.innerHTML = '';
+            
+            if (currentSection === 1) {
+                const q = section1Questions[currentQuestion];
+                const questionDiv = createMCQ(q, currentQuestion);
+                questions1Div.appendChild(questionDiv);
+            } else if (currentSection === 2) {
+                const q = section2Questions[currentQuestion];
+                const questionDiv = createShortAnswer(q, currentQuestion, userAnswers2);
+                questions2Div.appendChild(questionDiv);
+            } else if (currentSection === 3) {
+                const q = section3Questions[currentQuestion];
+                const questionDiv = createShortAnswer(q, currentQuestion, userAnswers3);
+                questions3Div.appendChild(questionDiv);
+            } else {
+                const q = section4Questions[currentQuestion];
+                const questionDiv = createMathQuestion(q, currentQuestion, userAnswers4);
+                questions4Div.appendChild(questionDiv);
+            }
+        }
+
+        function createMCQ(q, index) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = q.question;
+            questionDiv.appendChild(questionText);
+            
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options';
+            
+            q.options.forEach((option, i) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'mcq-option';
+                optionDiv.textContent = `${String.fromCharCode(65 + i)}. ${option}`;
+                optionDiv.addEventListener('click', () => {
+                    userAnswers1[index] = option;
+                    showQuestion(); // Refresh to show result
+                });
+                
+                // Highlight selected option
+                if (userAnswers1[index] === option) {
+                    optionDiv.style.backgroundColor = '#e6d4ff';
+                }
+                
+                optionsDiv.appendChild(optionDiv);
+            });
+            
+            questionDiv.appendChild(optionsDiv);
+            
+            // Show result if answer exists
+            if (userAnswers1[index] !== null) {
+                const resultDiv = document.createElement('div');
+                const isCorrect = q.answer === userAnswers1[index];
+                resultDiv.className = isCorrect ? 'result correct' : 'result incorrect';
+                resultDiv.textContent = isCorrect 
+                    ? 'Correct! ' + q.explanation 
+                    : `Incorrect. The correct answer is ${q.answer}. ${q.explanation}`;
+                questionDiv.appendChild(resultDiv);
+            }
+            
+            return questionDiv;
+        }
+
+        function createShortAnswer(q, index, userAnswers) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = q.question;
+            questionDiv.appendChild(questionText);
+            
+            const keywordHint = document.createElement('div');
+            keywordHint.className = 'keyword-hint';
+            keywordHint.textContent = `(Look for keywords like: ${q.keywords.join(', ')})`;
+            questionDiv.appendChild(keywordHint);
+            
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'options';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'answer-input';
+            input.value = userAnswers[index] || '';
+            answerDiv.appendChild(input);
+            
+            questionDiv.appendChild(answerDiv);
+            
+            // Show result if answer exists
+            if (userAnswers[index] !== null) {
+                const resultDiv = document.createElement('div');
+                const isCorrect = checkKeywords(userAnswers[index], q.keywords);
+                resultDiv.className = isCorrect ? 'result correct' : 'result incorrect';
+                resultDiv.innerHTML = isCorrect 
+                    ? 'Good answer! ' + q.explanation 
+                    : `Compare your answer to: "${q.answer}". ${q.explanation}`;
+                questionDiv.appendChild(resultDiv);
+            }
+            
+            return questionDiv;
+        }
+
+        function createMathQuestion(q, index, userAnswers) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = q.question + ` (Formula: ${q.formula})`;
+            questionDiv.appendChild(questionText);
+            
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'options';
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = "any";
+            input.id = 'answer-input';
+            input.value = userAnswers[index] || '';
+            answerDiv.appendChild(input);
+            
+            const unitText = document.createElement('span');
+            unitText.textContent = ` ${q.unit}`;
+            unitText.style.marginLeft = '5px';
+            answerDiv.appendChild(unitText);
+            
+            questionDiv.appendChild(answerDiv);
+            
+            // Show result if answer exists
+            if (userAnswers[index] !== null) {
+                const resultDiv = document.createElement('div');
+                const isCorrect = Math.abs(parseFloat(userAnswers[index]) - parseFloat(q.answer)) < 0.01;
+                resultDiv.className = isCorrect ? 'result correct' : 'result incorrect';
+                resultDiv.textContent = isCorrect 
+                    ? 'Correct! ' + q.explanation 
+                    : `Incorrect. The correct answer is ${q.answer} ${q.unit}. ${q.explanation}`;
+                questionDiv.appendChild(resultDiv);
+            }
+            
+            return questionDiv;
+        }
+
+        function checkKeywords(answer, keywords) {
+            const lowerAnswer = answer.toLowerCase();
+            return keywords.some(keyword => lowerAnswer.includes(keyword.toLowerCase()));
+        }
+
+        function nextQuestion() {
+            // Save answer
+            const input = document.getElementById('answer-input');
+            if (input) {
+                if (currentSection === 2) {
+                    userAnswers2[currentQuestion] = input.value.trim();
+                } else if (currentSection === 3) {
+                    userAnswers3[currentQuestion] = input.value.trim();
+                } else if (currentSection === 4) {
+                    userAnswers4[currentQuestion] = input.value.trim();
+                }
+            }
+            
+            // Check if moving to next section
+            if ((currentSection === 1 && currentQuestion === section1Questions.length - 1) ||
+                (currentSection === 2 && currentQuestion === section2Questions.length - 1) ||
+                (currentSection === 3 && currentQuestion === section3Questions.length - 1)) {
+                currentSection++;
+                currentQuestion = 0;
+                document.getElementById(`section-${currentSection-1}`).classList.add('hidden');
+                document.getElementById(`section-${currentSection}`).classList.remove('hidden');
+                showQuestion();
+                return;
+            }
+            
+            // Check if submitting
+            if (currentSection === 4 && currentQuestion === section4Questions.length - 1) {
+                submitQuiz();
+                return;
+            }
+            
+            // Move to next question
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function prevQuestion() {
+            // Save answer
+            const input = document.getElementById('answer-input');
+            if (input) {
+                if (currentSection === 2) {
+                    userAnswers2[currentQuestion] = input.value.trim();
+                } else if (currentSection === 3) {
+                    userAnswers3[currentQuestion] = input.value.trim();
+                } else if (currentSection === 4) {
+                    userAnswers4[currentQuestion] = input.value.trim();
+                }
+            }
+            
+            // Check if moving to previous section
+            if (currentSection !== 1 && currentQuestion === 0) {
+                currentSection--;
+                currentQuestion = currentSection === 1 ? section1Questions.length - 1 : 
+                                 currentSection === 2 ? section2Questions.length - 1 : section3Questions.length - 1;
+                document.getElementById(`section-${currentSection+1}`).classList.add('hidden');
+                document.getElementById(`section-${currentSection}`).classList.remove('hidden');
+                showQuestion();
+                return;
+            }
+            
+            // Move to previous question
+            currentQuestion--;
+            showQuestion();
+        }
+
+        function submitQuiz() {
+            // Calculate scores
+            score1 = userAnswers1.filter((ans, i) => ans === section1Questions[i].answer).length;
+            score2 = userAnswers2.filter((ans, i) => ans && checkKeywords(ans, section2Questions[i].keywords)).length;
+            score3 = userAnswers3.filter((ans, i) => ans && checkKeywords(ans, section3Questions[i].keywords)).length;
+            score4 = userAnswers4.filter((ans, i) => ans && Math.abs(parseFloat(ans) - parseFloat(section4Questions[i].answer)) < 0.01).length;
+            
+            // Show results
+            quizContainer.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            finalScore.textContent = score1 + score2 + score3 + score4;
+            section1Score.textContent = score1;
+            section2Score.textContent = score2;
+            section3Score.textContent = score3;
+            section4Score.textContent = score4;
+            
+            // Show detailed results
+            detailedResults.innerHTML = '';
+            
+            // Section 1 results
+            const section1Results = document.createElement('div');
+            section1Results.innerHTML = '<h3>Section 1: Multiple Choice</h3>';
+            detailedResults.appendChild(section1Results);
+            
+            section1Questions.forEach((q, index) => {
+                const resultDiv = createResultDiv(q, index, userAnswers1[index], 
+                    userAnswers1[index] === q.answer, q.answer);
+                section1Results.appendChild(resultDiv);
+            });
+            
+            // Section 2 results
+            const section2Results = document.createElement('div');
+            section2Results.innerHTML = '<h3>Section 2: Conceptual Short Answer</h3>';
+            detailedResults.appendChild(section2Results);
+            
+            section2Questions.forEach((q, index) => {
+                const isCorrect = userAnswers2[index] && checkKeywords(userAnswers2[index], q.keywords);
+                const resultDiv = createResultDiv(q, index, userAnswers2[index], 
+                    isCorrect, q.answer);
+                section2Results.appendChild(resultDiv);
+            });
+            
+            // Section 3 results
+            const section3Results = document.createElement('div');
+            section3Results.innerHTML = '<h3>Section 3: Factual Short Answer</h3>';
+            detailedResults.appendChild(section3Results);
+            
+            section3Questions.forEach((q, index) => {
+                const isCorrect = userAnswers3[index] && checkKeywords(userAnswers3[index], q.keywords);
+                const resultDiv = createResultDiv(q, index, userAnswers3[index], 
+                    isCorrect, q.answer);
+                section3Results.appendChild(resultDiv);
+            });
+            
+            // Section 4 results
+            const section4Results = document.createElement('div');
+            section4Results.innerHTML = '<h3>Section 4: Math Problems</h3>';
+            detailedResults.appendChild(section4Results);
+            
+            section4Questions.forEach((q, index) => {
+                const isCorrect = userAnswers4[index] && 
+                    Math.abs(parseFloat(userAnswers4[index]) - parseFloat(q.answer) < 0.01)
+                const resultDiv = createResultDiv(q, index, 
+                    userAnswers4[index] ? `${userAnswers4[index]} ${q.unit}` : 'Not answered', 
+                    isCorrect, `${q.answer} ${q.unit}`);
+                section4Results.appendChild(resultDiv);
+            });
+        }
+
+        function createResultDiv(q, index, userAnswer, isCorrect, correctAnswer) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'question';
+            
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = `${index + 1}. ${q.question}`;
+            resultDiv.appendChild(questionText);
+            
+            const userAnswerDiv = document.createElement('div');
+            userAnswerDiv.textContent = `Your answer: ${userAnswer || 'Not answered'}`;
+            resultDiv.appendChild(userAnswerDiv);
+            
+            const correctAnswerDiv = document.createElement('div');
+            correctAnswerDiv.textContent = `Correct answer: ${correctAnswer}`;
+            resultDiv.appendChild(correctAnswerDiv);
+            
+            const explanationDiv = document.createElement('div');
+            explanationDiv.textContent = `Explanation: ${q.explanation}`;
+            resultDiv.appendChild(explanationDiv);
+            
+            resultDiv.style.backgroundColor = isCorrect ? '#d4edda' : '#f8d7da';
+            resultDiv.style.padding = '10px';
+            resultDiv.style.marginBottom = '10px';
+            resultDiv.style.borderRadius = '5px';
+            
+            return resultDiv;
+        }
+
+        function restartQuiz() {
+            // Reset quiz state
+            currentSection = 1;
+            currentQuestion = 0;
+            score1 = score2 = score3 = score4 = 0;
+            userAnswers1 = new Array(section1Questions.length).fill(null);
+            userAnswers2 = new Array(section2Questions.length).fill(null);
+            userAnswers3 = new Array(section3Questions.length).fill(null);
+            userAnswers4 = new Array(section4Questions.length).fill(null);
+            
+            // Show quiz again
+            resultsScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            section1Div.classList.remove('hidden');
+            section2Div.classList.add('hidden');
+            section3Div.classList.add('hidden');
+            section4Div.classList.add('hidden');
+            showQuestion();
+        }
+    </script>
+</body>
+</html>
